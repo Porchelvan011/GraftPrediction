@@ -1,26 +1,18 @@
 package com.simats.graftpredict.data.local
 
 import android.content.Context
-import android.content.SharedPreferences
-import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
 
 class SessionManager(context: Context) {
-    private val appContext = context.applicationContext ?: context
     private val prefsFile = "graftpredict_prefs"
-    private val prefs: SharedPreferences = try {
-        EncryptedSharedPreferences.create(
-            prefsFile,
-            MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC),
-            appContext,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
-    } catch (e: Throwable) {
-        Log.e("SessionManager", "Keystore initialization failed, falling back to standard prefs", e)
-        appContext.getSharedPreferences(prefsFile + "_fallback", Context.MODE_PRIVATE)
-    }
+    private val prefs = EncryptedSharedPreferences.create(
+        prefsFile,
+        MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC),
+        context,
+        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+    )
 
     companion object {
         private const val KEY_TOKEN = "key_token"

@@ -1,11 +1,8 @@
 package com.simats.graftpredict.utils
 
-import retrofit2.HttpException
-import org.json.JSONObject
-
 /**
  * Sanitizes error messages to hide sensitive information like IP addresses and ports
- * while presenting accurate, helpful feedback to users.
+ * from being displayed to users
  */
 object ErrorHandler {
     /**
@@ -15,34 +12,8 @@ object ErrorHandler {
      * @return A user-friendly error message
      */
     fun sanitizeError(exception: Exception?, defaultMessage: String): String {
-        if (exception == null) return defaultMessage
-
-        if (exception is HttpException) {
-            val code = exception.code()
-            val errorBody = try {
-                exception.response()?.errorBody()?.string()
-            } catch (e: Exception) {
-                null
-            }
-
-            val jsonMsg = if (!errorBody.isNullOrEmpty() && errorBody.trim().startsWith("{")) {
-                try {
-                    val msg = JSONObject(errorBody).optString("error", "")
-                    if (msg.isNotEmpty()) msg else null
-                } catch (e: Exception) {
-                    null
-                }
-            } else null
-
-            return when {
-                !jsonMsg.isNullOrEmpty() -> jsonMsg
-                code == 401 -> "Invalid email or password"
-                code == 403 -> "Access denied"
-                code == 404 -> "Service endpoint not found (404)"
-                code == 429 -> "Too many attempts. Please wait a moment."
-                code in 500..599 -> "Server Error ($code): Database or service is offline on server."
-                else -> "$defaultMessage (HTTP $code)"
-            }
+        if (exception == null || exception.message.isNullOrEmpty()) {
+            return defaultMessage
         }
 
         val message = exception.message ?: return defaultMessage

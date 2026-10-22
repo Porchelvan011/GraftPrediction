@@ -12,10 +12,10 @@
         <domain includeSubdomains="false">10.0.2.2</domain>
     </domain-config>
 
-    <!-- Development: allow cleartext for common 192.168.x.x IPs and remote backend server -->
+    <!-- Development: allow cleartext for common 192.168.x.x IPs -->
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="false">192.168.0.7</domain>
-        <domain includeSubdomains="false">180.235.121.253</domain>
+
     </domain-config>
 
     <!-- Debug: more permissive trust configuration -->

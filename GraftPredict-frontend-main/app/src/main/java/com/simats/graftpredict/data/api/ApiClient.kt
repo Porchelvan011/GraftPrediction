@@ -20,7 +20,7 @@ object ApiClient {
 
     // 10.0.2.2 points to host PC from Android Emulator; 127.0.0.1 works on physical device with adb reverse
     val BASE_URL: String
-        get() = if (isEmulator) "http://10.0.2.2:5000/" else "http://127.0.0.1:5000/"
+        get() = if (isEmulator) "http://180.235.121.253:8063/" else "http://180.235.121.253:8063/"
 
     fun create(sessionManager: SessionManager): ApiService {
         val logging = HttpLoggingInterceptor()

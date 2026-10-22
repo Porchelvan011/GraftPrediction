@@ -1,11 +1,11 @@
 import contextlib
 import mysql.connector
+_orig_connect = mysql.connector.connect
 from mysql.connector import pooling
 from contextlib import contextmanager
 import threading
 import config
 
-_orig_connect = mysql.connector.connect
 _pool = None
 _pool_lock = threading.Lock()
 
@@ -44,7 +44,7 @@ def get_conn():
             except Exception:
                 conn = None
         if conn is None:
-            conn = mysql.connector.connect(
+            conn = _orig_connect(
                 host=config.DB_HOST,
                 user=config.DB_USER,
                 password=config.DB_PASSWORD,
@@ -80,6 +80,9 @@ def compat_connect(*args, **kwargs):
             return conn
         except Exception:
             pass
+    # If caller provided args/kwargs, pass them directly to original unpatched connect
+    if args or kwargs:
+        return _orig_connect(*args, **kwargs)
     return _orig_connect(
         host=config.DB_HOST,
         user=config.DB_USER,
