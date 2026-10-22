@@ -7,18 +7,19 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
 
 class SessionManager(context: Context) {
+    private val appContext = context.applicationContext ?: context
     private val prefsFile = "graftpredict_prefs"
     private val prefs: SharedPreferences = try {
         EncryptedSharedPreferences.create(
             prefsFile,
             MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC),
-            context,
+            appContext,
             EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
             EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
         )
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
         Log.e("SessionManager", "Keystore initialization failed, falling back to standard prefs", e)
-        context.getSharedPreferences(prefsFile + "_fallback", Context.MODE_PRIVATE)
+        appContext.getSharedPreferences(prefsFile + "_fallback", Context.MODE_PRIVATE)
     }
 
     companion object {

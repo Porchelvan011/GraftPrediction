@@ -14,7 +14,8 @@ object ApiClient {
 
     /**
      * Remote backend server base URL.
-     * CRITICAL: Must end with a trailing slash '/' to prevent Retrofit IllegalArgumentException crashes.
+     * Note: Retrofit requires baseUrl to end in '/'. The sanitization logic ensures
+     * that even if a path or missing trailing slash is present, it is cleaned safely.
      */
     const val BASE_URL: String = "http://180.235.121.253:8063/"
 
@@ -22,6 +23,19 @@ object ApiClient {
      * Optional local emulator URL if running backend locally via Flask (python wsgi.py)
      */
     const val LOCAL_EMULATOR_URL: String = "http://10.0.2.2:5000/"
+
+    /**
+     * Sanitizes any URL to ensure Retrofit receives a valid base URL ending in '/'
+     * and strips any inadvertent health or endpoint path (e.g. /healthz).
+     */
+    fun sanitizeBaseUrl(url: String): String {
+        var clean = url.trim()
+        clean = clean.replace(Regex("/healthz/?$", RegexOption.IGNORE_CASE), "")
+        if (!clean.endsWith("/")) {
+            clean = "$clean/"
+        }
+        return clean
+    }
 
     private val isEmulator: Boolean
         get() = android.os.Build.FINGERPRINT.startsWith("generic")
@@ -59,7 +73,7 @@ object ApiClient {
             .build()
 
         val retrofit = Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(sanitizeBaseUrl(BASE_URL))
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
