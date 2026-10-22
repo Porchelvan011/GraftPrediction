@@ -20,9 +20,9 @@ object ApiClient {
     const val BASE_URL: String = "http://180.235.121.253:8063/"
 
     /**
-     * Optional local emulator URL if running backend locally via Flask (python wsgi.py)
+     * Local emulator host loopback URL
      */
-    const val LOCAL_EMULATOR_URL: String = "http://10.0.2.2:5000/"
+    const val LOCAL_EMULATOR_URL: String = "http://10.0.2.2:8063/"
 
     /**
      * Sanitizes any URL to ensure Retrofit receives a valid base URL ending in '/'
@@ -37,7 +37,7 @@ object ApiClient {
         return clean
     }
 
-    private val isEmulator: Boolean
+    val isEmulator: Boolean
         get() = android.os.Build.FINGERPRINT.startsWith("generic")
                 || android.os.Build.FINGERPRINT.startsWith("unknown")
                 || android.os.Build.MODEL.contains("google_sdk")
@@ -46,6 +46,14 @@ object ApiClient {
                 || android.os.Build.HARDWARE.contains("goldfish")
                 || android.os.Build.HARDWARE.contains("ranchu")
                 || android.os.Build.PRODUCT.contains("sdk")
+
+    fun getEffectiveBaseUrl(): String {
+        return if (isEmulator) {
+            LOCAL_EMULATOR_URL
+        } else {
+            sanitizeBaseUrl(BASE_URL)
+        }
+    }
 
     fun create(sessionManager: SessionManager): ApiService {
         val logging = HttpLoggingInterceptor { message ->
@@ -72,8 +80,11 @@ object ApiClient {
             .retryOnConnectionFailure(true)
             .build()
 
+        val safeBaseUrl = getEffectiveBaseUrl()
+        Log.i(TAG, "Initializing Retrofit with Base URL: $safeBaseUrl (isEmulator=$isEmulator)")
+
         val retrofit = Retrofit.Builder()
-            .baseUrl(sanitizeBaseUrl(BASE_URL))
+            .baseUrl(safeBaseUrl)
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
