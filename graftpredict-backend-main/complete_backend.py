@@ -62,7 +62,13 @@ app.config['SECRET_KEY'] = config.SECRET_KEY
 mysql.connector.connect = compat_connect
 
 # Rate limiting
-limiter = Limiter(key_func=get_remote_address, app=app, default_limits=["200 per day", "50 per hour"], storage_uri="memory://") 
+limiter = Limiter(key_func=get_remote_address, app=app, default_limits=["200 per day", "50 per hour"], storage_uri="memory://")
+
+# Ensure Connection header indicates close to prevent stale keep-alive reuse in HTTP/1.1 dev servers
+@app.after_request
+def ensure_connection_close(response):
+    response.headers["Connection"] = "close"
+    return response
 
 
 def validate_required_env():
@@ -1346,42 +1352,63 @@ def list_doctors():
     except Exception:
         return jsonify({"error": "Invalid token"}), 401
 
-    conn = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="",
-        database="graftpredict"
-    )
-    cursor = conn.cursor(dictionary=True)
+    conn = None
+    cursor = None
+    try:
+        conn = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="",
+            database="graftpredict"
+        )
+        cursor = conn.cursor(dictionary=True)
 
-    cursor.execute("SELECT id, first_name, last_name, email, created_at FROM signin WHERE `user` = %s", ("doctor",))
-    rows = cursor.fetchall()
+        cursor.execute("SELECT id, first_name, last_name, email, created_at FROM signin WHERE `user` = %s", ("doctor",))
+        rows = cursor.fetchall()
 
-    # Convert datetime to string for JSON and fetch user_details
-    doctors = []
-    for r in rows:
-        created = r["created_at"].strftime("%Y-%m-%d %H:%M:%S") if r.get("created_at") else None
-        
-        # Fetch user_details for this doctor
-        cursor.execute("SELECT dob, gender, age FROM user_details WHERE user_id = %s", (r["id"],))
-        details = cursor.fetchone()
-        
-        doctor_data = {
-            "id": r["id"],
-            "first_name": r["first_name"],
-            "last_name": r["last_name"],
-            "email": r["email"],
-            "created_at": created,
-            "dob": details.get("dob") if details else None,
-            "gender": details.get("gender") if details else None,
-            "age": details.get("age") if details else None
-        }
-        doctors.append(doctor_data)
+        # Convert datetime to string for JSON and fetch user_details
+        doctors = []
+        for r in rows:
+            created = r["created_at"].strftime("%Y-%m-%d %H:%M:%S") if r.get("created_at") else None
+            
+            # Fetch user_details for this doctor
+            cursor.execute("SELECT dob, gender, age FROM user_details WHERE user_id = %s", (r["id"],))
+            details = cursor.fetchone()
+            
+            dob_val = details.get("dob") if details else None
+            if hasattr(dob_val, "strftime"):
+                dob_val = dob_val.strftime("%a, %d %b %Y 00:00:00 GMT")
+            elif dob_val is not None:
+                dob_val = str(dob_val)
 
-    cursor.close()
-    conn.close()
+            doctor_data = {
+                "id": str(r["id"]),
+                "first_name": r.get("first_name") or "",
+                "last_name": r.get("last_name") or "",
+                "email": r.get("email") or "",
+                "created_at": created,
+                "dob": dob_val,
+                "gender": details.get("gender") if details else None,
+                "age": details.get("age") if details else None
+            }
+            doctors.append(doctor_data)
 
-    return jsonify({"doctors": doctors}), 200
+        return jsonify({"doctors": doctors}), 200
+    except Exception as e:
+        app.logger.exception("Error in /admin/doctors: %s", e)
+        return jsonify({"error": f"Failed to retrieve doctors: {str(e)}"}), 500
+    finally:
+        if cursor:
+            try:
+                cursor.close()
+            except Exception:
+                pass
+        if conn:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
 
 # ---------------- ADMIN: CREATE DOCTOR (admin only) ----------------
 @app.route("/admin/create-doctor", methods=["POST"])

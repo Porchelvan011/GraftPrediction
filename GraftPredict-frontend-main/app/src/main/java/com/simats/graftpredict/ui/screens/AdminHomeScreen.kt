@@ -58,22 +58,31 @@ private fun formatDateOfBirth(dateString: String): String {
     }
 }
 
-// Helper function to fetch doctors from API
+// Helper function to fetch doctors from API with retry
 private fun fetchDoctors(
     api: ApiService,
+    maxRetries: Int = 3,
     callback: (List<Doctor>, String?) -> Unit
 ) {
     GlobalScope.launch {
-        try {
-            val response = api.getDoctors()
-            if (response.error == null && response.doctors != null) {
-                callback(response.doctors, null)
-            } else {
-                callback(emptyList(), response.error ?: "Unknown error")
+        var lastError: String? = null
+        for (attempt in 1..maxRetries) {
+            try {
+                val response = api.getDoctors()
+                if (response.error == null && response.doctors != null) {
+                    callback(response.doctors, null)
+                    return@launch
+                } else {
+                    lastError = response.error ?: "Unknown error"
+                }
+            } catch (e: Exception) {
+                lastError = e.message ?: "Connection error"
+                if (attempt < maxRetries) {
+                    kotlinx.coroutines.delay(400L * attempt)
+                }
             }
-        } catch (e: Exception) {
-            callback(emptyList(), e.message)
         }
+        callback(emptyList(), lastError)
     }
 }
 
