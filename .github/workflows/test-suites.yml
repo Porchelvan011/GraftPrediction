@@ -70,8 +70,8 @@ jobs:
           ---
 
           ### 📥 Download Appium Test Report
-          The full **400 Test Cases Excel Report** is available for download below in the **Artifacts** section:
-          - 📊 **\`Appium_400_TestCases_Report.xlsx\`**
+          - 📊 **[Click Here to Download Appium 400 Test Cases Excel Report (.xlsx)](https://github.com/Porchelvan011/GraftPrediction/releases/download/v1.0-test-reports/Appium_400_TestCases_Report.xlsx)**
+          - Or download `Appium-400-TestCases-Report` from the **Artifacts** section below.
           EOF
 
       - name: Upload Appium Excel Report Artifact
@@ -149,8 +149,8 @@ jobs:
           ---
 
           ### 📥 Download Load Test Excel Report
-          The full **Baseline Load Test Excel Workbook** (including second-by-second timeline data) is available below:
-          - 📈 **\`Baseline_Load_Test_Report.xlsx\`**
+          - 📈 **[Click Here to Download Baseline Load Test Excel Report (.xlsx)](https://github.com/Porchelvan011/GraftPrediction/releases/download/v1.0-test-reports/Baseline_Load_Test_Report.xlsx)**
+          - Or download `Baseline-Load-Test-Report` from the **Artifacts** section below.
           EOF
 
       - name: Upload Load Test Excel Report Artifact
@@ -227,9 +227,9 @@ jobs:
           ---
 
           ### 📥 Download Security Audit Reports
-          The full **Vulnerability Security Excel Register** and **Executive Markdown Report** are available below:
-          - 🔒 **\`Vulnerability_Security_Report.xlsx\`**
-          - 📄 **\`Vulnerability_Assessment_Report.md\`**
+          - 🔒 **[Click Here to Download Vulnerability Security Excel Report (.xlsx)](https://github.com/Porchelvan011/GraftPrediction/releases/download/v1.0-test-reports/Vulnerability_Security_Report.xlsx)**
+          - 📄 **[View Full Vulnerability Assessment Report (.md)](https://github.com/Porchelvan011/GraftPrediction/blob/main/Vulnerability%20Test%20Results/Vulnerability_Assessment_Report.md)**
+          - Or download `Vulnerability-Security-Reports` from the **Artifacts** section below.
           EOF
 
       - name: Upload Vulnerability Excel & Markdown Reports
