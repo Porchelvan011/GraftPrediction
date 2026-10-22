@@ -1,5 +1,6 @@
 package com.simats.graftpredict.data.api
 
+import android.util.Log
 import com.simats.graftpredict.data.local.SessionManager
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -7,7 +8,21 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
+
 object ApiClient {
+    private const val TAG = "ApiClient"
+
+    /**
+     * Remote backend server base URL.
+     * CRITICAL: Must end with a trailing slash '/' to prevent Retrofit IllegalArgumentException crashes.
+     */
+    const val BASE_URL: String = "http://180.235.121.253:8063/"
+
+    /**
+     * Optional local emulator URL if running backend locally via Flask (python wsgi.py)
+     */
+    const val LOCAL_EMULATOR_URL: String = "http://10.0.2.2:5000/"
+
     private val isEmulator: Boolean
         get() = android.os.Build.FINGERPRINT.startsWith("generic")
                 || android.os.Build.FINGERPRINT.startsWith("unknown")
@@ -18,13 +33,12 @@ object ApiClient {
                 || android.os.Build.HARDWARE.contains("ranchu")
                 || android.os.Build.PRODUCT.contains("sdk")
 
-    // 10.0.2.2 points to host PC from Android Emulator; 127.0.0.1 works on physical device with adb reverse
-    val BASE_URL: String
-        get() = if (isEmulator) "http://10.0.2.2:5000/" else "http://127.0.0.1:5000/"
-
     fun create(sessionManager: SessionManager): ApiService {
-        val logging = HttpLoggingInterceptor()
-        logging.level = HttpLoggingInterceptor.Level.BODY
+        val logging = HttpLoggingInterceptor { message ->
+            Log.d(TAG, message)
+        }.apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
 
         val authInterceptor = Interceptor { chain ->
             val reqBuilder = chain.request().newBuilder()
@@ -40,6 +54,8 @@ object ApiClient {
             .addInterceptor(logging)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)
             .build()
 
         val retrofit = Retrofit.Builder()
