@@ -206,32 +206,31 @@ def login():
     if not all([email, password]):
         return jsonify({"error": "Email and password required"}), 400
 
-    conn = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="",
-        database="graftpredict"
-    )
-    cursor = conn.cursor(dictionary=True)
-
-    cursor.execute("SELECT * FROM signin WHERE email = %s", (email,))
-    user = cursor.fetchone()
-
-    # Normalize stored password hash if it's binary (migration convenience)
     try:
-        if user and isinstance(user.get("password_hash"), (bytes, bytearray)):
-            normalized = user.get("password_hash").decode("utf-8")
-            ucur = conn.cursor()
-            ucur.execute("UPDATE signin SET password_hash = %s WHERE id = %s", (normalized, user.get("id")))
-            conn.commit()
-            ucur.close()
-            user["password_hash"] = normalized
-    except Exception:
-        # Non-fatal: continue using the value as-is
-        pass
+        conn = compat_connect()
+        cursor = conn.cursor(dictionary=True)
 
-    cursor.close()
-    conn.close()
+        cursor.execute("SELECT * FROM signin WHERE email = %s", (email,))
+        user = cursor.fetchone()
+
+        # Normalize stored password hash if it's binary (migration convenience)
+        try:
+            if user and isinstance(user.get("password_hash"), (bytes, bytearray)):
+                normalized = user.get("password_hash").decode("utf-8")
+                ucur = conn.cursor()
+                ucur.execute("UPDATE signin SET password_hash = %s WHERE id = %s", (normalized, user.get("id")))
+                conn.commit()
+                ucur.close()
+                user["password_hash"] = normalized
+        except Exception:
+            # Non-fatal: continue using the value as-is
+            pass
+
+        cursor.close()
+        conn.close()
+    except Exception as e:
+        logger.error(f"Login database error: {e}")
+        return jsonify({"error": f"Database connection error: {str(e)}"}), 500
 
     if not user:
         return jsonify({"error": "Invalid email or password"}), 401

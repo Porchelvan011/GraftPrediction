@@ -1,10 +1,11 @@
-﻿import contextlib
+import contextlib
 import mysql.connector
 from mysql.connector import pooling
 from contextlib import contextmanager
 import threading
 import config
 
+_orig_connect = mysql.connector.connect
 _pool = None
 _pool_lock = threading.Lock()
 
@@ -79,7 +80,7 @@ def compat_connect(*args, **kwargs):
             return conn
         except Exception:
             pass
-    return mysql.connector.connect(
+    return _orig_connect(
         host=config.DB_HOST,
         user=config.DB_USER,
         password=config.DB_PASSWORD,
