@@ -1,0 +1,36 @@
+# Build and Gradle
+.gradle/
+build/
+**/build/
+*.apk
+*.aab
+local.properties
+
+# IDE & Editor files
+.idea/
+.kotlin/
+.vscode/
+.config/
+*.iml
+*.iws
+*.ipr
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+
+# Environment and sensitive data
+.env
+.env.local
+.env.*.local
+
+# Runtime data & logs
+*.log
+uploads/*
+!uploads/.gitkeep
